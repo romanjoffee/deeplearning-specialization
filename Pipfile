@@ -10,6 +10,7 @@ matplotlib = "*"
 sklearn = "*"
 "h5py" = "*"
 scipy = "*"
+pillow = "*"
 
 [dev-packages]
 

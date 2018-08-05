@@ -24,7 +24,6 @@ wheels/
 MANIFEST
 
 
-
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -83,3 +82,5 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+.idea/
