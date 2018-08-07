@@ -8,7 +8,6 @@ from lr_utils import load_dataset
 
 
 def model(X_train, Y_train, num_iterations=2000, learning_rate=0.5, print_cost=False):
-
     w, b = initialize_with_zeros(X_train.shape[0])
 
     costs = []
@@ -34,7 +33,7 @@ def model(X_train, Y_train, num_iterations=2000, learning_rate=0.5, print_cost=F
             print("Cost after iteration %i: %f" % (i, cost))
 
     learned_params = {"w": w,
-              "b": b}
+                      "b": b}
 
     return learned_params, costs
 
@@ -48,6 +47,16 @@ def forward_propagation(w, b, X, Y):
     assert (cost.shape == ())
 
     return A, cost
+
+
+
+
+
+
+
+
+
+
 
 
 def backward_propagation(w, X, Y, A):

@@ -10,7 +10,7 @@ pipenv install
 
 ### Prerequisites
 
-Python 3, pip, pipenv
+Python 3+, pip, pipenv
 
 ## Description
 Code for programming assignments of Andew Ng's Deep Learning specialization course.
