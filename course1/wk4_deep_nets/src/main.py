@@ -41,12 +41,12 @@ def L_model_forward(X, parameters):
     # Implement LINEAR -> SIGMOID. Add "cache" to the "caches" list.
     W = parameters["W" + str(L)]
     b = parameters["b" + str(L)]
-    AL, cache = linear_activation_forward(A, W, b, "sigmoid")
+    Yhat, cache = linear_activation_forward(A, W, b, "sigmoid")
     caches.append(cache)
 
-    assert (AL.shape == (1, X.shape[1]))
+    assert (Yhat.shape == (1, X.shape[1]))
 
-    return AL, caches
+    return Yhat, caches
 
 
 def linear_activation_forward(A_prev, W, b, activationFn):
@@ -136,12 +136,12 @@ def linear_activation_backward(dA, cache, activation):
     elif activation == "sigmoid":
         dZ = utils.sigmoid_backward(dA, Z)
 
-    dA_prev, dW, db = linear_backward(dZ, (A_prev, W, b))
+    dA_prev, dW, db = linear_backward(dZ, A_prev, W, b)
 
     return dA_prev, dW, db
 
 
-def linear_backward(dZ, cache):
+def linear_backward(dZ, A_prev, W, b):
     """
     Implement the linear portion of backward propagation for a single layer (layer l)
 
@@ -154,7 +154,6 @@ def linear_backward(dZ, cache):
     dW -- Gradient of the cost with respect to W (current layer l), same shape as W
     db -- Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    A_prev, W, b = cache
     m = A_prev.shape[1]
 
     dW = 1 / m * np.dot(dZ, A_prev.T)
@@ -193,15 +192,14 @@ def predict(X, y, parameters):
     """
 
     m = X.shape[1]
-    n = len(parameters) // 2  # number of layers in the neural network
     p = np.zeros((1, m))
 
     # Forward propagation
-    probas, caches = L_model_forward(X, parameters)
+    Yhat, caches = L_model_forward(X, parameters)
 
     # convert probas to 0/1 predictions
-    for i in range(0, probas.shape[1]):
-        if probas[0, i] > 0.5:
+    for i in range(0, Yhat.shape[1]):
+        if Yhat[0, i] > 0.5:
             p[0, i] = 1
         else:
             p[0, i] = 0
@@ -226,6 +224,7 @@ def print_mislabeled_images(classes, X, y, p):
             "Prediction: " + classes[int(p[0, index])].decode("utf-8") + " \n Class: " + classes[y[0, index]].decode(
                 "utf-8"))
     plt.show()
+
 
 def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=3000, print_cost=False):
     """
@@ -254,20 +253,18 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=3000, 
     for i in range(0, num_iterations):
 
         # Forward propagation: [LINEAR -> RELU]*(L-1) -> LINEAR -> SIGMOID.
-        AL, caches = L_model_forward(X, parameters)
-
-        cost = utils.compute_cost(AL, Y)
+        Yhat, caches = L_model_forward(X, parameters)
 
         # Backward propagation
-        grads = L_model_backward(AL, Y, caches)
+        gradients = L_model_backward(Yhat, Y, caches)
 
         # Update parameters
-        parameters = update_parameters(parameters, grads, learning_rate)
+        parameters = update_parameters(parameters, gradients, learning_rate)
 
         # Print the cost every 100 training example
         if print_cost and i % 100 == 0:
+            cost = utils.compute_cost(Yhat, Y)
             print("Cost after iteration %i: %f" % (i, cost))
-        if print_cost and i % 100 == 0:
             costs.append(cost)
 
     # plot the cost
@@ -280,14 +277,14 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=3000, 
     return parameters
 
 
-
 def main():
     train_x_orig, train_y, test_x_orig, test_y, classes = utils.load_data()
-    train_x_flatten_normalized = train_x_orig.reshape(train_x_orig.shape[0], -1).T / 255.    # The "-1" makes reshape flatten the remaining dimensions
+    train_x_flatten_normalized = train_x_orig.reshape(train_x_orig.shape[0],
+                                                      -1).T / 255.  # The "-1" makes reshape flatten the remaining dimensions
     test_x_flatten_normalized = test_x_orig.reshape(test_x_orig.shape[0], -1).T / 255.
 
-    #hyper-parameters
-    layers = [train_x_flatten_normalized.shape[0], 20, 7, 5, 1]
+    # hyper-parameters
+    layers = [64 * 64 * 3, 20, 7, 5, 1]  # 64 by 64 image, 3 layers for RGB, hence X vector has 64 x 64 x 3 features
     num_iterations = 2500
     learning_rate = 0.009
 
