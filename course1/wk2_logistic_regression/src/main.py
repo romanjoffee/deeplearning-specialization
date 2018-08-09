@@ -49,16 +49,6 @@ def forward_propagation(w, b, X, Y):
     return A, cost
 
 
-
-
-
-
-
-
-
-
-
-
 def backward_propagation(w, X, Y, A):
     m = X.shape[1]
 
