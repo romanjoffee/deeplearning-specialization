@@ -89,80 +89,6 @@ def initialize_parameters(layer_dims):
         
     return parameters
 
-
-def forward_propagation(X, parameters):
-    """
-    Implements the forward propagation (and computes the loss) presented in Figure 2.
-    
-    Arguments:
-    X -- input dataset, of shape (input size, number of examples)
-    parameters -- python dictionary containing your parameters "W1", "b1", "W2", "b2", "W3", "b3":
-                    W1 -- weight matrix of shape ()
-                    b1 -- bias vector of shape ()
-                    W2 -- weight matrix of shape ()
-                    b2 -- bias vector of shape ()
-                    W3 -- weight matrix of shape ()
-                    b3 -- bias vector of shape ()
-    
-    Returns:
-    loss -- the loss function (vanilla logistic loss)
-    """
-        
-    # retrieve parameters
-    W1 = parameters["W1"]
-    b1 = parameters["b1"]
-    W2 = parameters["W2"]
-    b2 = parameters["b2"]
-    W3 = parameters["W3"]
-    b3 = parameters["b3"]
-    
-    # LINEAR -> RELU -> LINEAR -> RELU -> LINEAR -> SIGMOID
-    Z1 = np.dot(W1, X) + b1
-    A1 = relu(Z1)
-    Z2 = np.dot(W2, A1) + b2
-    A2 = relu(Z2)
-    Z3 = np.dot(W3, A2) + b3
-    A3 = sigmoid(Z3)
-    
-    cache = (Z1, A1, W1, b1, Z2, A2, W2, b2, Z3, A3, W3, b3)
-    
-    return A3, cache
-
-def backward_propagation(X, Y, cache):
-    """
-    Implement the backward propagation presented in figure 2.
-    
-    Arguments:
-    X -- input dataset, of shape (input size, number of examples)
-    Y -- true "label" vector (containing 0 if cat, 1 if non-cat)
-    cache -- cache output from forward_propagation()
-    
-    Returns:
-    gradients -- A dictionary with the gradients with respect to each parameter, activation and pre-activation variables
-    """
-    m = X.shape[1]
-    (Z1, A1, W1, b1, Z2, A2, W2, b2, Z3, A3, W3, b3) = cache
-    
-    dZ3 = A3 - Y
-    dW3 = 1./m * np.dot(dZ3, A2.T)
-    db3 = 1./m * np.sum(dZ3, axis=1, keepdims = True)
-    
-    dA2 = np.dot(W3.T, dZ3)
-    dZ2 = np.multiply(dA2, np.int64(A2 > 0))
-    dW2 = 1./m * np.dot(dZ2, A1.T)
-    db2 = 1./m * np.sum(dZ2, axis=1, keepdims = True)
-    
-    dA1 = np.dot(W2.T, dZ2)
-    dZ1 = np.multiply(dA1, np.int64(A1 > 0))
-    dW1 = 1./m * np.dot(dZ1, X.T)
-    db1 = 1./m * np.sum(dZ1, axis=1, keepdims = True)
-    
-    gradients = {"dZ3": dZ3, "dW3": dW3, "db3": db3,
-                 "dA2": dA2, "dZ2": dZ2, "dW2": dW2, "db2": db2,
-                 "dA1": dA1, "dZ1": dZ1, "dW1": dW1, "db1": db1}
-    
-    return gradients
-
 def update_parameters(parameters, grads, learning_rate):
     """
     Update parameters using gradient descent
@@ -189,56 +115,6 @@ def update_parameters(parameters, grads, learning_rate):
         
     return parameters
 
-def predict(X, y, parameters):
-    """
-    This function is used to predict the results of a  n-layer neural network.
-    
-    Arguments:
-    X -- data set of examples you would like to label
-    parameters -- parameters of the trained model
-    
-    Returns:
-    p -- predictions for the given dataset X
-    """
-    
-    m = X.shape[1]
-    p = np.zeros((1,m), dtype = np.int)
-    
-    # Forward propagation
-    a3, caches = forward_propagation(X, parameters)
-    
-    # convert probas to 0/1 predictions
-    for i in range(0, a3.shape[1]):
-        if a3[0,i] > 0.5:
-            p[0,i] = 1
-        else:
-            p[0,i] = 0
-
-    # print results
-
-    #print ("predictions: " + str(p[0,:]))
-    #print ("true labels: " + str(y[0,:]))
-    print("Accuracy: "  + str(np.mean((p[0,:] == y[0,:]))))
-    
-    return p
-
-def compute_cost(a3, Y):
-    """
-    Implement the cost function
-    
-    Arguments:
-    a3 -- post-activation, output of forward propagation
-    Y -- "true" labels vector, same shape as a3
-    
-    Returns:
-    cost - value of the cost function
-    """
-    m = Y.shape[1]
-    
-    logprobs = np.multiply(-np.log(a3),Y) + np.multiply(-np.log(1 - a3), 1 - Y)
-    cost = 1./m * np.nansum(logprobs)
-    
-    return cost
 
 def load_dataset():
     train_dataset = h5py.File('datasets/train_catvnoncat.h5', "r")
@@ -262,52 +138,6 @@ def load_dataset():
 
     return train_set_x, train_set_y, test_set_x, test_set_y, classes
 
-
-def predict_dec(parameters, X):
-    """
-    Used for plotting decision boundary.
-    
-    Arguments:
-    parameters -- python dictionary containing your parameters 
-    X -- input data of size (m, K)
-    
-    Returns
-    predictions -- vector of predictions of our model (red: 0 / blue: 1)
-    """
-    
-    # Predict using forward propagation and a classification threshold of 0.5
-    a3, cache = forward_propagation(X, parameters)
-    predictions = (a3>0.5)
-    return predictions
-
-def load_planar_dataset(randomness, seed):
-    
-    np.random.seed(seed)
-    
-    m = 50
-    N = int(m/2) # number of points per class
-    D = 2 # dimensionality
-    X = np.zeros((m,D)) # data matrix where each row is a single example
-    Y = np.zeros((m,1), dtype='uint8') # labels vector (0 for red, 1 for blue)
-    a = 2 # maximum ray of the flower
-
-    for j in range(2):
-        
-        ix = range(N*j,N*(j+1))
-        if j == 0:
-            t = np.linspace(j, 4*3.1415*(j+1),N) #+ np.random.randn(N)*randomness # theta
-            r = 0.3*np.square(t) + np.random.randn(N)*randomness # radius
-        if j == 1:
-            t = np.linspace(j, 2*3.1415*(j+1),N) #+ np.random.randn(N)*randomness # theta
-            r = 0.2*np.square(t) + np.random.randn(N)*randomness # radius
-            
-        X[ix] = np.c_[r*np.cos(t), r*np.sin(t)]
-        Y[ix] = j
-        
-    X = X.T
-    Y = Y.T
-
-    return X, Y
 
 def plot_decision_boundary(model, X, y):
     # Set min and max values and give it some padding
@@ -333,6 +163,6 @@ def load_2D_dataset():
     test_X = data['Xval'].T
     test_Y = data['yval'].T
 
-    plt.scatter(train_X[0, :], train_X[1, :], c=train_Y.ravel(), s=40, cmap=plt.cm.Spectral);
-    plt.show()
+    #plt.scatter(train_X[0, :], train_X[1, :], c=train_Y.ravel(), s=40, cmap=plt.cm.Spectral);
+    #plt.show()
     return train_X, train_Y, test_X, test_Y
