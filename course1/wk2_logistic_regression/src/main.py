@@ -38,6 +38,19 @@ def model(X_train, Y_train, num_iterations=2000, learning_rate=0.5, print_cost=F
     return learned_params, costs
 
 
+
+def forward_propagation(w, b, X, Y):
+    m = X.shape[1]
+
+    Z = np.dot(w.T, X) + b
+    A = sigmoid(Z)
+
+    cost = -1 / m * np.sum(Y * np.log(A) + (1-Y) * np.log(1-A))
+    cost = np.squeeze(cost)
+
+    return A, cost
+
+
 def forward_propagation(w, b, X, Y):
     m = X.shape[1]
 
