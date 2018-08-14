@@ -103,10 +103,10 @@ def L_model_backward(AL, Y, caches):
     # Loop from l=L-1 to l=1
     for l in reversed(range(1, L)):
         # lth layer: (RELU -> LINEAR) gradients.
-        # Inputs: "dL_dA, current_cache". Outputs: "dL_dW , dL_db, dL_dA_prev
+        # Inputs: "dA, current_cache". Outputs: "dL_dW , dL_db, dL_dA_prev
         current_cache = caches[l - 1]
-        dL_dA = grads["dA" + str(l)]
-        dL_dW, dL_db, dA_prev = linear_activation_backward(dL_dA, current_cache, "relu")
+        dA = grads["dA" + str(l)]
+        dL_dW, dL_db, dA_prev = linear_activation_backward(dA, current_cache, "relu")
         grads["dW" + str(l)] = dL_dW
         grads["db" + str(l)] = dL_db
         grads["dA" + str(l - 1)] = dA_prev      # think of this step as -> dA[l-1] = W[l] * dL_dZ[l]
@@ -114,7 +114,7 @@ def L_model_backward(AL, Y, caches):
     return grads
 
 
-def linear_activation_backward(dL_dA, cache, activation):
+def linear_activation_backward(dA, cache, activation):
     """
     Implement the backward propagation for the LINEAR->ACTIVATION layer.
 
@@ -132,9 +132,9 @@ def linear_activation_backward(dL_dA, cache, activation):
 
     dL_dZ = None
     if activation == "relu":
-        dL_dZ = utils.relu_backward(dL_dA, Z)
+        dL_dZ = utils.relu_backward(dA, Z)
     elif activation == "sigmoid":
-        dL_dZ = utils.sigmoid_backward(dL_dA, Z)
+        dL_dZ = utils.sigmoid_backward(dA, Z)
 
     m = A_prev.shape[1]
 
@@ -204,6 +204,7 @@ def print_mislabeled_images(classes, X, y, p):
         plt.imshow(X[:, index].reshape(64, 64, 3), interpolation='nearest')
         plt.axis('off')
         plt.title("Prediction: " + classes[int(p[0, index])].decode("utf-8") + " \n Class: " + classes[y[0, index]].decode("utf-8"))
+
     plt.show()
 
 
