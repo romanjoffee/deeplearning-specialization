@@ -71,7 +71,7 @@ def linear_activation_forward(A_prev, W, b, activationFn):
 #end forward pass
 
 
-#start backward pass
+# start backward pass
 def L_model_backward(AL, Y, caches):
     """
     Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
@@ -94,27 +94,27 @@ def L_model_backward(AL, Y, caches):
     Y = Y.reshape(AL.shape)  # after this line, Y is the same shape as AL
 
     # Initializing the backpropagation
-    dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+    dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))  # dL/dA, derivative of cross-entropy loss function
 
     # Lth layer (SIGMOID -> LINEAR) gradients. Inputs: "dAL, current_cache". Outputs: "grads["dAL-1"], grads["dWL"], grads["dbL"]
-    current_cache = caches[L - 1]
-    grads["dA" + str(L - 1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(dAL, current_cache, "sigmoid")
+    current_cache = caches[L - 1]   #for the l-th layer since that collection is 0-based
+    grads["dW" + str(L)], grads["db" + str(L)], grads["dA" + str(L - 1)] = linear_activation_backward(dAL, current_cache, "sigmoid")
 
-    # Loop from l=L-2 to l=0
-    for l in reversed(range(L - 1)):
+    # Loop from l=L-1 to l=1
+    for l in reversed(range(1, L)):
         # lth layer: (RELU -> LINEAR) gradients.
-        # Inputs: "grads["dA" + str(l + 1)], current_cache". Outputs: "grads["dA" + str(l)] , grads["dW" + str(l + 1)] , grads["db" + str(l + 1)]
-        current_cache = caches[l]
-        dA_L_plus_one = grads["dA" + str(l + 1)]
-        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(dA_L_plus_one, current_cache, "relu")
-        grads["dA" + str(l)] = dA_prev_temp
-        grads["dW" + str(l + 1)] = dW_temp
-        grads["db" + str(l + 1)] = db_temp
+        # Inputs: "dL_dA, current_cache". Outputs: "dL_dW , dL_db, dL_dA_prev
+        current_cache = caches[l - 1]
+        dL_dA = grads["dA" + str(l)]
+        dL_dW, dL_db, dA_prev = linear_activation_backward(dL_dA, current_cache, "relu")
+        grads["dW" + str(l)] = dL_dW
+        grads["db" + str(l)] = dL_db
+        grads["dA" + str(l - 1)] = dA_prev      # think of this step as -> dA[l-1] = W[l] * dL_dZ[l]
 
     return grads
 
 
-def linear_activation_backward(dA, cache, activation):
+def linear_activation_backward(dL_dA, cache, activation):
     """
     Implement the backward propagation for the LINEAR->ACTIVATION layer.
 
@@ -128,43 +128,26 @@ def linear_activation_backward(dA, cache, activation):
     dW -- Gradient of the cost with respect to W (current layer l), same shape as W
     db -- Gradient of the cost with respect to b (current layer l), same shape as b
     """
-
     A_prev, W, b, Z = cache
-    dZ = None
+
+    dL_dZ = None
     if activation == "relu":
-        dZ = utils.relu_backward(dA, Z)
+        dL_dZ = utils.relu_backward(dL_dA, Z)
     elif activation == "sigmoid":
-        dZ = utils.sigmoid_backward(dA, Z)
+        dL_dZ = utils.sigmoid_backward(dL_dA, Z)
 
-    dA_prev, dW, db = linear_backward(dZ, A_prev, W, b)
-
-    return dA_prev, dW, db
-
-
-def linear_backward(dZ, A_prev, W, b):
-    """
-    Implement the linear portion of backward propagation for a single layer (layer l)
-
-    Arguments:
-    dZ -- Gradient of the cost with respect to the linear output (of current layer l)
-    cache -- tuple of values (A_prev, W, b) coming from the forward propagation in the current layer
-
-    Returns:
-    dA_prev -- Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
-    dW -- Gradient of the cost with respect to W (current layer l), same shape as W
-    db -- Gradient of the cost with respect to b (current layer l), same shape as b
-    """
     m = A_prev.shape[1]
 
-    dW = 1 / m * np.dot(dZ, A_prev.T)
-    db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
-    dA_prev = np.dot(W.T, dZ)
+    dL_dW = 1 / m * np.dot(dL_dZ, A_prev.T)                 # dL_dA * dA_dZ * dZ_dW = dL_dW
+    dL_db = 1 / m * np.sum(dL_dZ, axis=1, keepdims=True)    # dL_dA * dA_dZ * dZ_db = dL_db
+
+    dA_prev = np.dot(W.T, dL_dZ)                            # think of this step as -> dA[l-1] = W[l] * dL_dZ[l]
 
     assert (dA_prev.shape == A_prev.shape)
-    assert (dW.shape == W.shape)
-    assert (db.shape == b.shape)
+    assert (dL_dW.shape == W.shape)
+    assert (dL_db.shape == b.shape)
 
-    return dA_prev, dW, db
+    return dL_dW, dL_db, dA_prev
 
 #end backward pass
 

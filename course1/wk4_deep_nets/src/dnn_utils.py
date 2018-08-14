@@ -71,14 +71,14 @@ def relu_backward(dA, cache):
     dZ = np.array(dA, copy=True)  # just converting dz to a correct object.
 
     # When z <= 0, you should set dz to 0 as well. 
-    dZ[Z <= 0] = 0
+    dZ[Z <= 0] = 0                                      # dL/dZ, derivative of relu function
 
     assert (dZ.shape == Z.shape)
 
     return dZ
 
 
-def sigmoid_backward(dA, cache):
+def sigmoid_backward(dL_dA, cache):
     """
     Implement the backward propagation for a single SIGMOID unit.
 
@@ -92,12 +92,14 @@ def sigmoid_backward(dA, cache):
 
     Z = cache
 
-    s = 1 / (1 + np.exp(-Z))
-    dZ = dA * s * (1 - s)
+    a = 1 / (1 + np.exp(-Z))
+    dA_dZ = a * (1 - a)         # dL/dZ, derivative of sigmoid function
 
-    assert (dZ.shape == Z.shape)
+    dL_dZ = dL_dA * dA_dZ
 
-    return dZ
+    assert (dL_dZ.shape == Z.shape)
+
+    return dL_dZ
 
 
 def compute_cost(AL, Y):
