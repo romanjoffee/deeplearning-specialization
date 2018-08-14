@@ -203,9 +203,7 @@ def print_mislabeled_images(classes, X, y, p):
         plt.subplot(2, num_images, i + 1)
         plt.imshow(X[:, index].reshape(64, 64, 3), interpolation='nearest')
         plt.axis('off')
-        plt.title(
-            "Prediction: " + classes[int(p[0, index])].decode("utf-8") + " \n Class: " + classes[y[0, index]].decode(
-                "utf-8"))
+        plt.title("Prediction: " + classes[int(p[0, index])].decode("utf-8") + " \n Class: " + classes[y[0, index]].decode("utf-8"))
     plt.show()
 
 
@@ -262,8 +260,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate=0.0075, num_iterations=3000, 
 
 def main():
     train_x_orig, train_y, test_x_orig, test_y, classes = utils.load_data()
-    train_x_flatten_normalized = train_x_orig.reshape(train_x_orig.shape[0],
-                                                      -1).T / 255.  # The "-1" makes reshape flatten the remaining dimensions
+    train_x_flatten_normalized = train_x_orig.reshape(train_x_orig.shape[0], -1).T / 255.  # The "-1" makes reshape flatten the remaining dimensions
     test_x_flatten_normalized = test_x_orig.reshape(test_x_orig.shape[0], -1).T / 255.
 
     # hyper-parameters
