@@ -95,7 +95,7 @@ def compute_cost(forward_prop, Y):
     logits = tf.transpose(forward_prop)
     labels = tf.transpose(Y)
 
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=logits))
 
     return cost
 
