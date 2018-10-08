@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.python.framework import ops
 from cnn_utils import *
 
+np.random.seed(1)
 
 def create_placeholders(n_H0, n_W0, n_C0, n_y):
     """
@@ -44,7 +45,7 @@ def initialize_parameters():
     return parameters
 
 
-def forward_propagation(X, parameters):
+def forward_propagation(X, parameters, dropout_keep_prob, seed):
     """
     Implements the forward propagation for the model:
     CONV2D -> RELU -> MAXPOOL -> CONV2D -> RELU -> MAXPOOL -> FLATTEN -> FULLYCONNECTED
@@ -83,6 +84,9 @@ def forward_propagation(X, parameters):
     # FULLY-CONNECTED without non-linear activation function (not not call softmax).
     # 6 neurons in output layer. Hint: one of the arguments should be "activation_fn=None"
     Z3 = tf.contrib.layers.fully_connected(P2, 6, activation_fn=None)
+
+    Z3 = tf.nn.dropout(Z3, dropout_keep_prob, seed=seed)   #dropout
+
     return Z3
 
 
@@ -101,8 +105,8 @@ def compute_cost(Z3, Y):
     return cost
 
 
-def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
-          num_epochs=100, minibatch_size=64, print_cost=True):
+def model(X_train, Y_train, X_test, Y_test, models, learning_rate=0.009,
+          num_epochs=100, minibatch_size=64, print_cost=True, dropout_keep_prob=1.0):
     """
     Implements a three-layer ConvNet in Tensorflow:
     CONV2D -> RELU -> MAXPOOL -> CONV2D -> RELU -> MAXPOOL -> FLATTEN -> FULLYCONNECTED
@@ -122,18 +126,21 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
     test_accuracy -- real number, testing accuracy on the test set (X_test)
     parameters -- parameters learnt by the model. They can then be used to predict.
     """
+    ops.reset_default_graph()
+    tf.set_random_seed(1)
+    seed = 3
+
     ops.reset_default_graph()  # to be able to rerun the model without overwriting tf variables
     (m, n_H0, n_W0, n_C0) = X_train.shape
     n_y = Y_train.shape[1]
     costs = []  # To keep track of the cost
-    print(X_train.shape)
     # Create Placeholders of the correct shape
     X, Y = create_placeholders(n_H0, n_W0, n_C0, n_y)
 
     # Initialize parameters
     parameters = initialize_parameters()
     # Forward propagation: Build the forward propagation in the tensorflow graph
-    Z3 = forward_propagation(X, parameters)
+    Z3 = forward_propagation(X, parameters, dropout_keep_prob, seed=seed)
     # Cost function: Add cost function to tensorflow graph
     cost_def = compute_cost(Z3, Y)
     # Backpropagation: Define the tf optimizer. Use an AdamOptimizer that minimizes the cost.
@@ -152,7 +159,8 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
         for epoch in range(num_epochs):
             minibatch_cost = 0.
             num_minibatches = int(m / minibatch_size)  # number of minibatches of size minibatch_size in the train set
-            minibatches = random_mini_batches(X_train, Y_train, minibatch_size)
+            seed = seed + 1
+            minibatches = random_mini_batches(X_train, Y_train, minibatch_size, seed)
 
             for minibatch in minibatches:
                 # Select a minibatch
@@ -170,11 +178,11 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
                 costs.append(minibatch_cost)
 
         # plot the cost
-        plt.plot(np.squeeze(costs))
-        plt.ylabel('cost')
-        plt.xlabel('iterations (per tens)')
-        plt.title("Learning rate =" + str(learning_rate))
-        plt.show()
+        # plt.plot(np.squeeze(costs))
+        # plt.ylabel('cost')
+        # plt.xlabel('iterations (per tens)')
+        # plt.title("Learning rate =" + str(learning_rate))
+        # plt.show()
 
         # Calculate the correct predictions
         predict_op = tf.argmax(Z3, 1)
@@ -188,7 +196,10 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
         print("Train Accuracy:", train_accuracy)
         print("Test Accuracy:", test_accuracy)
 
-        return train_accuracy, test_accuracy, parameters
+        models["train_acc " + str(dropout_keep_prob)] = train_accuracy
+        models["test_acc " + str(dropout_keep_prob)] = test_accuracy
+
+        return train_accuracy, test_accuracy, parameters, models
 
 
 def main():
@@ -198,7 +209,18 @@ def main():
     Y_train = convert_to_one_hot(Y_train_orig, 6).T
     Y_test = convert_to_one_hot(Y_test_orig, 6).T
 
-    _, _, parameters = model(X_train, Y_train, X_test, Y_test,num_epochs=50)
+    models = {}
+    range = np.linspace(0.5, 0.70, 21)
+
+    test_range = [.51, .54, .58, .59, .61, .66, .69]
+
+    #_, _, parameters, models = model(X_train, Y_train, X_test, Y_test, models, num_epochs=100, dropout_keep_prob=1.0)
+
+    #for keep_prob in test_range:
+        #print("Training with dropout: " + str(keep_prob))
+    _, _, parameters, models = model(X_train, Y_train, X_test, Y_test, models, learning_rate=0.009, num_epochs=200, dropout_keep_prob=0.92)
+
+    print(models)
 
 
 if __name__ == '__main__':
