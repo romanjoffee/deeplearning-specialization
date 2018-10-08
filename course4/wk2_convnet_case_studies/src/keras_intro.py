@@ -1,6 +1,6 @@
 import keras
 from keras.layers import Input, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, Conv2D
-from keras.layers import MaxPooling2D
+from keras.layers import MaxPooling2D, AveragePooling2D
 from keras.models import Model
 from keras.preprocessing import image
 from keras.applications.imagenet_utils import preprocess_input
@@ -19,7 +19,7 @@ def model_graph(model):
     SVG(model_to_dot(model).create(prog='dot', format='svg'))
 
 
-def modelDefSequential(input_shape):
+def model_Sequential(input_shape):
     model = keras.Sequential()
     model.add(keras.layers.Conv2D(filters=32,
                                   kernel_size=7,
@@ -29,10 +29,10 @@ def modelDefSequential(input_shape):
                                   input_shape=input_shape))
     model.add(keras.layers.MaxPooling2D(pool_size=2))
 
-    #model.add(keras.layers.Dropout(0.9))
+    # model.add(keras.layers.Dropout(0.9))
     # model.add(keras.layers.Conv2D(filters=32, kernel_size=2, padding='same', activation='relu'))
     # model.add(keras.layers.MaxPooling2D(pool_size=2))
-    #model.add(keras.layers.Dropout(0.3))
+    # model.add(keras.layers.Dropout(0.3))
 
     model.add(keras.layers.Flatten())
     # model.add(keras.layers.Dense(256, activation='relu'))
@@ -42,7 +42,7 @@ def modelDefSequential(input_shape):
     return model
 
 
-def modelDef(input_shape):
+def model_Def(input_shape):
     X_input = Input(input_shape)
 
     # Zero-Padding: pads the border of X_input with zeroes
@@ -61,7 +61,7 @@ def modelDef(input_shape):
     X = Dense(1, activation='sigmoid', name='fc')(X)
 
     # Create model. This creates your Keras model instance, you'll use this instance to train/test the model.
-    model = Model(inputs=X_input, outputs=X, name='HappyModel')
+    model = Model(inputs=X_input, outputs=X, name='model')
     return model
 
 
@@ -81,7 +81,7 @@ def main():
 
     checkpoint = keras.callbacks.ModelCheckpoint(filepath="model.weights.best.hdf5", verbose=True, save_best_only=True)
 
-    model = modelDefSequential((x_train.shape[1], x_train.shape[2], x_train.shape[3]))
+    model = model_Sequential((x_train.shape[1], x_train.shape[2], x_train.shape[3]))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     # model.fit(x_train, y_train, batch_size=64, epochs=30,
